@@ -5,13 +5,13 @@ Description: Plugin que permite editar los titles, keywords, slugs y meta descri
 Author: Ovi García - ovimedia.es
 Author URI: http://www.ovimedia.es/
 Text Domain: wp_yoast_posts_editor
-Version: 1.0
+Version: 1.1
 Plugin URI: http://www.ovimedia.es/
 */
 
 if ( ! class_exists( 'wp_yoast_posts_editor' ) ) 
 {
-	class wp_yoast_posts_editor 
+    class wp_yoast_posts_editor 
     {
         function __construct() 
         {   
@@ -179,7 +179,7 @@ if ( ! class_exists( 'wp_yoast_posts_editor' ) )
 
                     <form method="post" action="<?php echo get_admin_url(); ?>wype_save_options">
 
-                        <input type="hidden" id="wype_type" name="wype_type" value="" />
+                        <input type="hidden" id="wype_type" name="wype_type" value="<?php echo $_REQUEST["wype_type"]; ?>" />
 
                         <p class="submit">
 
