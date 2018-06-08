@@ -183,7 +183,7 @@ if ( ! class_exists( 'wp_yoast_posts_editor' ) )
 
                         <p class="submit">
 
-                            <input type="submit" value="Guardar" class="button button-primary" />
+                            
 
                             <select  id="wype_post_type_id" name="wype_post_type_id">
 
@@ -251,6 +251,8 @@ if ( ! class_exists( 'wp_yoast_posts_editor' ) )
                             <input type="checkbox" checked id="show_ytitles" /> Titles 
                             <input type="checkbox" checked id="show_ykeywords" /> Keywords 
                             <input type="checkbox" checked id="show_ydescriptions" /> Meta Descriptions
+
+                            <input type="submit" value="Guardar cambios" class="button button-primary" />
                         </p>
 
                         <div id="wype_posts_content" class="wype_post_list">

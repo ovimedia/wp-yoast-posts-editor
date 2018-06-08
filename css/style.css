@@ -20,7 +20,7 @@
     padding: 20px 0px 18px !important;
     float: left;
     text-align: center !important;
-    background-color: #23282d !important;
+    background-color: #555555 !important;
     color: #fff;
     width: 99%;
 }
@@ -63,7 +63,7 @@
         margin: 12px 2% !important;
         text-align: center !important;
     }
-    .wrap_wype_content  .submit {
+    .wrap_wype_content .submit {
         text-align: center !important;
     }
     #wpcontent {
@@ -76,4 +76,8 @@
     width: 96%;
     padding: 10px 2%;
     min-height: 40px;
+}
+
+.wrap_wype_content .submit input[type=submit].button {
+    margin-left: 40px;
 }
