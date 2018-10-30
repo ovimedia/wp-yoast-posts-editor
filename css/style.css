@@ -1,12 +1,27 @@
 .wrap_wype_content .wype_post_list {
-    width: 97%;
-    padding: 20px 0%;
+    width: 86%;
+    padding: 20px;
     float: left;
+    box-sizing: border-box !important;
 }
 
 .wrap_wype_content select {
-    min-width: 250px;
+    width: 100%;
     height: 28px;
+}
+
+.wrap_wype_content .divider {
+    padding: 0px;
+    background: #fff;
+    width: 100% !important;
+    margin: 18px 0px;
+    height: 1px;
+}
+
+.wrap_wype_content #url_csv,
+.wrap_wype_content #terms_url_csv {
+    width: 100% !important;
+    margin-top: 12px;
 }
 
 .wrap_wype_content .row {
@@ -17,12 +32,37 @@
 }
 
 .wrap_wype_content .submit {
-    padding: 20px 0px 18px !important;
     float: left;
     text-align: center !important;
-    background-color: #555555 !important;
     color: #fff;
-    width: 99%;
+    box-sizing: border-box !important;
+    width: 12%;
+    margin-top: 0px !important;
+}
+
+.wrap_wype_content .submit .content {
+    background-color: #555555 !important;
+    padding: 20px !important;
+}
+
+.wrap_wype_content #wype_links_csv {
+    width: 100%;
+}
+
+.wrap_wype_content .submit .button-primary {
+    width: 100% !important;
+    margin-top: 12px !important;
+}
+
+.wrap_wype_content .search_bar {
+    float: left;
+    width: 86% !important;
+    margin: 20px 1% 0px !important;
+    background-color: #555555 !important;
+    padding: 20px !important;
+    color: #fff !important;
+    text-align: right !important;
+    box-sizing: border-box !important;
 }
 
 .wp-admin .wrap_wype_content select,
@@ -35,7 +75,7 @@
 }
 
 .wrap_wype_content .col {
-    width: 20%;
+    width: 25%;
     float: left;
 }
 
@@ -65,10 +105,24 @@
     }
     .wrap_wype_content .submit {
         text-align: center !important;
+        width: 100% !important;
     }
     #wpcontent {
         padding-left: 0px !important;
     }
+    .wrap_wype_content .search_bar {
+        width: 100% !important;
+        text-align: center !important;
+    }
+    .wrap_wype_content .wype_post_list {
+        width: 100%;
+        padding: 5px;
+    }
+}
+
+.wrap_wype_content .button-secondary {
+    margin-top: 15px !important;
+    width: 100% !important;
 }
 
 .wrap_wype_content .col input,
@@ -78,6 +132,8 @@
     min-height: 40px;
 }
 
-.wrap_wype_content .submit input[type=submit].button {
-    margin-left: 40px;
+.wrap_wype_content .submit .btnsubmit {
+    margin-top: 20px !important;
+    line-height: 32px !important;
+    height: 32px !important;
 }
