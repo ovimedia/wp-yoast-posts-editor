@@ -139,14 +139,10 @@ if ( ! class_exists( 'wp_yoast_posts_editor' ) )
         {
             if (($gestor = fopen($_REQUEST["url_csv"], "r")) !== FALSE) 
             {
-                $id = "";
-
                 while (($datos = fgetcsv($gestor, 1000, ",")) !== FALSE) 
                 {
-                    $id = url_to_postid($datos[0]);
-
-                    update_post_meta($id,  "_yoast_wpseo_title", $datos[1]);
-                    update_post_meta($id,  "_yoast_wpseo_metadesc", $datos[2]);
+                    update_post_meta($datos[0], "_yoast_wpseo_title", $datos[2]);
+                    update_post_meta($datos[0], "_yoast_wpseo_metadesc", $datos[3]);
                 }
 
                 fclose($gestor);
@@ -169,7 +165,7 @@ if ( ! class_exists( 'wp_yoast_posts_editor' ) )
 
             $output = fopen($uploads['basedir']."/".$_REQUEST["post_type"].'.csv', 'w');
 
-            fputcsv($output, array('Permalink', 'Title', 'Description'));
+            fputcsv($output, array('ID', 'Permalink', 'Title', 'Description'));
 
             foreach($posts as $post)
             {
@@ -178,6 +174,7 @@ if ( ! class_exists( 'wp_yoast_posts_editor' ) )
 
                 $row = array();
 
+                $row[] = $post->ID;
                 $row[] = get_permalink($post->ID);
                 $row[] = $yoast_wpseo_title;
                 $row[] = $yoast_metadescription;
