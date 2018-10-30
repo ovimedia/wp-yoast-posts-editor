@@ -5,7 +5,7 @@ Description: Plugin que permite editar los titles, keywords, slugs y meta descri
 Author: Ovi García - ovimedia.es
 Author URI: http://www.ovimedia.es/
 Text Domain: wp_yoast_posts_editor
-Version: 1.1
+Version: 2.0
 Plugin URI: http://www.ovimedia.es/
 */
 
@@ -20,6 +20,10 @@ if ( ! class_exists( 'wp_yoast_posts_editor' ) )
             add_action( 'init', array( $this, 'wype_save_options') );
             add_action( 'wp_ajax_wype_load_posts', array( $this, 'wype_ajax_load_posts') );
             add_action( 'wp_ajax_wype_load_terms', array( $this, 'wype_ajax_load_terms') );
+            add_action( 'wp_ajax_wype_csv_export', array( $this, 'wype_ajax_csv_export') );
+            add_action( 'wp_ajax_wype_csv_import', array( $this, 'wype_ajax_csv_import') );
+            add_action( 'wp_ajax_wype_terms_csv_export', array( $this, 'wype_ajax_terms_csv_export') );
+            add_action( 'wp_ajax_wype_terms_csv_import', array( $this, 'wype_ajax_tems_csv_import') );
         }
         
         public function wype_admin_menu() 
@@ -91,6 +95,7 @@ if ( ! class_exists( 'wp_yoast_posts_editor' ) )
                 &wype_post_type_id=".$_REQUEST["wype_post_type_id"]."&wype_post_terms_id=".$_REQUEST["wype_post_terms_id"]);
                 exit();
             }
+           
         }
         public function wype_ajax_load_posts()
         {
@@ -113,7 +118,6 @@ if ( ! class_exists( 'wp_yoast_posts_editor' ) )
             {
                 $yoast_wpseo_title = get_post_meta( $post->ID, "_yoast_wpseo_title", true );
                 $yoast_metadescription = get_post_meta( $post->ID, "_yoast_wpseo_metadesc", true );
-                $yoast_keywords = get_post_meta( $post->ID, "_yoast_wpseo_focuskw", true );
 
                 echo "<div class='row'>";
                 echo "<div class='col'><p>".$post->post_title."<br><a target='_blank' href='".get_edit_post_link($post->ID)."'>Editar</a> 
@@ -123,13 +127,68 @@ if ( ! class_exists( 'wp_yoast_posts_editor' ) )
                 value='".$post->post_name."'/></div>";
                 echo "<div class='col ytitles'><input type='text' id='_yoast_wpseo_title_".$post->ID."' name='_yoast_wpseo_title_".$post->ID."' 
                 value='".$yoast_wpseo_title."' placeholder='Title'/></div>";
-                echo "<div class='col ykeywords'><input type='text' id='_yoast_wpseo_focuskw_".$post->ID."' name='_yoast_wpseo_focuskw_".$post->ID."' 
-                value='".$yoast_keywords."' placeholder='Keywords'/></div>";
                 echo "<div class='col ydescriptions'><textarea id='_yoast_wpseo_metadesc_".$post->ID."' name='_yoast_wpseo_metadesc_".$post->ID."'
                 placeholder='Meta Description'>".$yoast_metadescription."</textarea></div></div>";
             }
 
             if($ajax) 
+            exit(); 
+        }
+
+        public function wype_ajax_csv_import()
+        {
+            if (($gestor = fopen($_REQUEST["url_csv"], "r")) !== FALSE) 
+            {
+                $id = "";
+
+                while (($datos = fgetcsv($gestor, 1000, ",")) !== FALSE) 
+                {
+                    $id = url_to_postid($datos[0]);
+
+                    update_post_meta($id,  "_yoast_wpseo_title", $datos[1]);
+                    update_post_meta($id,  "_yoast_wpseo_metadesc", $datos[2]);
+                }
+
+                fclose($gestor);
+            }
+        }
+
+        public function wype_ajax_csv_export()
+        {
+            $uploads = wp_upload_dir();
+
+            $args = array(
+                'orderby' => 'title',
+                'order' => 'asc',
+                'numberposts' => $_REQUEST["total"],
+                'post_type' => $_REQUEST["post_type"], 
+                'post_status' => 'publish'
+            ); 
+                
+            $posts = get_posts($args); 
+
+            $output = fopen($uploads['basedir']."/".$_REQUEST["post_type"].'.csv', 'w');
+
+            fputcsv($output, array('Permalink', 'Title', 'Description'));
+
+            foreach($posts as $post)
+            {
+                $yoast_wpseo_title = get_post_meta( $post->ID, "_yoast_wpseo_title", true );
+                $yoast_metadescription = get_post_meta( $post->ID, "_yoast_wpseo_metadesc", true );
+
+                $row = array();
+
+                $row[] = get_permalink($post->ID);
+                $row[] = $yoast_wpseo_title;
+                $row[] = $yoast_metadescription;
+
+                fputcsv($output, $row);
+            }
+
+            fclose($output);
+
+            echo "<a class='button button-secondary' href='".$uploads['baseurl']."/".$_REQUEST["post_type"].".csv'>Descargar CSV</a>";
+        
             exit(); 
         }
 
@@ -146,6 +205,8 @@ if ( ! class_exists( 'wp_yoast_posts_editor' ) )
             $terms = get_terms( $type, array(
                 'hide_empty' => false,
                 'number' => $results,
+                'orderby' => 'name',
+                "order" => 'asc'
             ) );           
 
             $meta = get_option( "wpseo_taxonomy_meta");
@@ -160,13 +221,76 @@ if ( ! class_exists( 'wp_yoast_posts_editor' ) )
                 value='".$term->slug."'/></div>";
                 echo "<div class='col ytitles'><input type='text' id='wpseo_title_".$term->term_id."' name='wpseo_title_".$term->term_id."' 
                 value='".$meta[$type][$term->term_id]["wpseo_title"]."' placeholder='Title'/></div>";
-                echo "<div class='col ykeywords'><input type='text' id='wpseo_focuskw_".$term->term_id."' name='wpseo_focuskw_".$term->term_id."' 
-                value='".$meta[$type][$term->term_id]["wpseo_focuskw"]."' placeholder='Keywords'/></div>";
                 echo "<div class='col ydescriptions'><textarea id='wpseo_desc_".$term->term_id."' name='wpseo_desc_".$term->term_id."'
                 placeholder='Meta Description'>".$meta[$type][$term->term_id]["wpseo_desc"]."</textarea></div></div>";
             }
 
             if($ajax) 
+            exit(); 
+        }
+
+        public function wype_ajax_tems_csv_import()
+        {
+            if (($gestor = fopen($_REQUEST["url_csv"], "r")) !== FALSE) 
+            {
+                $meta = get_option( "wpseo_taxonomy_meta");
+
+                $term = "";
+
+                while (($datos = fgetcsv($gestor, 1000, ",")) !== FALSE) 
+                {
+                    $term = get_term_by("slug", $datos[1], $datos[0]);
+        
+                    $meta[$term->taxonomy][$term->term_id]["wpseo_title"] = $datos[2];   
+                    $meta[$term->taxonomy][$term->term_id]["wpseo_desc"] = $datos[3];                        
+                }
+
+                update_option( "wpseo_taxonomy_meta", $meta);
+
+                fclose($gestor);
+            }
+
+            exit(); 
+        }
+
+        public function wype_ajax_terms_csv_export()
+        {
+            $uploads = wp_upload_dir();
+
+            $type = $_REQUEST["term_id"];
+            $results = $_REQUEST["total"];
+
+            $meta = get_option( "wpseo_taxonomy_meta");
+
+            if($results == -1)
+                $results = "";
+            
+            $terms = get_terms($type, array(
+                'hide_empty' => false,
+                'number' => $results,
+                'orderby' => 'name',
+                "order" => 'asc'
+            ) );           
+
+            $output = fopen($uploads['basedir']."/".$_REQUEST["term_id"].'.csv', 'w');
+
+            fputcsv($output, array('Taxonomy', 'Slug', 'Title', 'Description'));
+
+            foreach($terms as $term)
+            {
+                $row = array();
+                $row[] = $term->taxonomy;
+                $row[] = $term->slug;
+                $row[] = $meta[$type][$term->term_id]["wpseo_title"];
+                $row[] = $meta[$type][$term->term_id]["wpseo_desc"];
+
+                fputcsv($output, $row);
+            }
+
+            fclose($output);
+
+            echo "<a class='button button-secondary' href='".$uploads['baseurl']."/".$_REQUEST["term_id"].".csv'>Descargar CSV</a>";
+        
             exit(); 
         }
 
@@ -177,103 +301,127 @@ if ( ! class_exists( 'wp_yoast_posts_editor' ) )
 
             <div class="wrap_wype_content">
 
-                    <form method="post" action="<?php echo get_admin_url(); ?>wype_save_options">
+                <form method="post" action="<?php echo get_admin_url(); ?>wype_save_options">
 
-                        <input type="hidden" id="wype_type" name="wype_type" value="<?php echo $_REQUEST["wype_type"]; ?>" />
+                    <div class="submit">
 
-                        <p class="submit">
+                        <div class="content">
+                        
+                        <input type="hidden" id="wype_type" name="wype_type" value="<?php echo $_REQUEST["wype_type"]; ?>" />   
 
-                            
+                        <select  id="wype_total_results" name="wype_total_results">
 
-                            <select  id="wype_post_type_id" name="wype_post_type_id">
+                        <?php $results = array("20 Resultados" => 20, "50 Resultados" => 50, "100 Resultados" => 100, "Todos los resultados" => -1);
 
-                            <option> --- Post Types --- </opton>
+                        foreach($results as $result => $value)
+                        {
+                            echo '<option value="'.$value.'"';                         
+                            if($_REQUEST["wype_total_results"] == $value) echo ' selected="selected" ';       
+                            echo '>'.ucfirst ($result).'</option>'; 
+                        }
 
-                                <?php
+                        ?>
+                        </select> 
 
-                                    $results = $wpdb->get_results( 'SELECT DISTINCT post_type FROM '.$wpdb->prefix.'posts 
-                                    WHERE post_status like "publish" and post_type <> "code" 
-                                    and post_type <> "nav_menu_item" and post_type <> "wpcf7_contact_form" order by 1 asc'  );
+                        <p class="divider"></p>
 
-                                    foreach ( $results as $row )
-                                    {                                    
-                                        echo '<option value="'.$row->post_type.'"';
-                                        
-                                        if($_REQUEST["wype_post_type_id"] == $row->post_type && $_REQUEST["wype_type"] == "post") echo ' selected="selected" ';
+                        <select  id="wype_post_type_id" name="wype_post_type_id">
 
-                                        echo '>'.ucfirst ($row->post_type).'</option>';
-                                    } 
-
-                                ?>
-
-                            </select>
-
-                            <input type="button" id="wype_ajax_load_posts" value="Cargar posts" class="button button-secondary" />
-
-                            <select  id="wype_post_terms_id" name="wype_post_terms_id">
-
-                            <option> --- Taxonomies --- </opton>
+                        <option> --- Post Types --- </opton>
 
                             <?php
-                    
-                                $taxonomies = get_taxonomies();
 
-                                foreach ( $taxonomies as $tax)
-                                {    
-                                    echo '<option value="'.$tax.'"';                         
-                                    if($_REQUEST["wype_post_terms_id"] == $tax && $_REQUEST["wype_type"] == "taxonomy") echo ' selected="selected" ';       
-                                    echo '>'.ucfirst ($tax).'</option>';
+                                $posts = $wpdb->get_results( 'SELECT DISTINCT post_type FROM '.$wpdb->prefix.'posts 
+                                WHERE post_status like "publish" and post_type <> "code" 
+                                and post_type <> "nav_menu_item" and post_type <> "wpcf7_contact_form" order by 1 asc'  );
+
+                                foreach ( $posts as $row )
+                                {                                    
+                                    echo '<option value="'.$row->post_type.'"';
+                                    
+                                    if($_REQUEST["wype_post_type_id"] == $row->post_type && $_REQUEST["wype_type"] == "post") echo ' selected="selected" ';
+
+                                    echo '>'.ucfirst ($row->post_type).'</option>';
                                 } 
 
                             ?>
 
-                            </select>
+                        </select>
 
-                            <input type="button" id="wype_ajax_load_taxonomies" value="Cargar terms" class="button button-secondary" />     
+                        <input type="button" id="wype_ajax_load_posts" value="Cargar posts" class="button button-primary" />
 
-                            <select  id="wype_total_results" name="wype_total_results">
+                        <input type="text" placeholder="URL CSV" id="url_csv" name="url_csv" />
 
-                            <?php $results = array("20 Resultados" => 20, "50 Resultados" => 50, "100 Resultados" => 100, "Todos los resultados" => -1);
+                        <input type="button" value="Importar CSV" class="button button-primary" id="import_csv" />
 
-                            foreach($results as $result => $value)
-                            {
-                                echo '<option value="'.$value.'"';                         
-                                if($_REQUEST["wype_total_results"] == $value) echo ' selected="selected" ';       
-                                echo '>'.ucfirst ($result).'</option>'; 
-                            }
+                        <input type="button" value="Exportar a CSV" class="button button-primary" id="export_csv" />
+                        <div id="wype_links_csv"></div>
 
-                            ?>
-                            </select> 
+                        <p class="divider"></p>
 
-                            <input type="text" id="search" placeholder="Buscar" />
+                        <select  id="wype_post_terms_id" name="wype_post_terms_id">
 
-                            <input type="checkbox" checked id="show_slugs" /> Slugs        
-                            <input type="checkbox" checked id="show_ytitles" /> Titles 
-                            <input type="checkbox" checked id="show_ykeywords" /> Keywords 
-                            <input type="checkbox" checked id="show_ydescriptions" /> Meta Descriptions
+                        <option> --- Taxonomies --- </opton>
 
-                            <input type="submit" value="Guardar cambios" class="button button-primary" />
-                        </p>
-
-                        <div id="wype_posts_content" class="wype_post_list">
-                        
                         <?php
+                
+                            $taxonomies = get_taxonomies();
 
-                            $results = 20;
+                            foreach ( $taxonomies as $tax)
+                            {    
+                                echo '<option value="'.$tax.'"';                         
+                                if($_REQUEST["wype_post_terms_id"] == $tax && $_REQUEST["wype_type"] == "taxonomy") echo ' selected="selected" ';       
+                                echo '>'.ucfirst ($tax).'</option>';
+                            } 
 
-                            if($_REQUEST["wype_total_results"] != "") $results = $_REQUEST["wype_total_results"];
-
-                            if($_REQUEST['wype_post_type_id'] != "" && $_REQUEST["wype_type"] == "post")
-                                $this->wype_load_posts_list(false,$_REQUEST['wype_post_type_id'], $results);
-
-                            if($_REQUEST["wype_post_terms_id"] != "" && $_REQUEST["wype_type"] == "taxonomy")
-                                $this->wype_load_terms_list(false,$_REQUEST["wype_post_terms_id"], $results);
                         ?>
-                        
-                        </div>
 
-                    </form>
+                        </select>
+
+                        <input type="button" id="wype_ajax_load_taxonomies" value="Cargar terms" class="button button-primary" /> 
+
+                        <input type="text" placeholder="URL CSV" id="terms_url_csv" name="terms_url_csv" />
+
+                        <input type="button" value="Importar CSV" class="button button-primary" id="terms_import_csv" />
+
+                        <input type="button" value="Exportar a CSV" class="button button-primary" id="terms_export_csv" />
+                        <div id="wype_links_terms_csv"></div>
+
+                        </div>    
+
+                        <input type="submit" value="Guardar" class="button btnsubmit button-primary" />
+
+                    </div>
+
+                    <div class="search_bar">
+
+                    <input type="text" id="search" placeholder="Buscar" />
+
+                        <input type="checkbox" checked id="show_slugs" /> Slugs        
+                        <input type="checkbox" checked id="show_ytitles" /> Titles 
+                        <input type="checkbox" checked id="show_ydescriptions" /> Meta Descriptions
+
+                    </div>
+
+                    <div id="wype_posts_content" class="wype_post_list">
                     
+                    <?php
+
+                        $results = 20;
+
+                        if($_REQUEST["wype_total_results"] != "") $results = $_REQUEST["wype_total_results"];
+
+                        if($_REQUEST['wype_post_type_id'] != "" && $_REQUEST["wype_type"] == "post")
+                            $this->wype_load_posts_list(false,$_REQUEST['wype_post_type_id'], $results);
+
+                        if($_REQUEST["wype_post_terms_id"] != "" && $_REQUEST["wype_type"] == "taxonomy")
+                            $this->wype_load_terms_list(false,$_REQUEST["wype_post_terms_id"], $results);
+                    ?>
+                    
+                    </div>
+
+                </form>
+                
             </div>
 
             <?php 
