@@ -137,3 +137,41 @@
     line-height: 32px !important;
     height: 32px !important;
 }
+
+.wrap_wype_content #loader {
+    display: none;
+}
+
+.wrap_wype_content #loader .dashicons {
+    position: absolute;
+    z-index: 999999;
+    top: 40%;
+    left: 50%;
+    width: 50px;
+    height: 50px;
+    margin: -25px 0 0 -25px;
+    -webkit-animation: spin 4s linear infinite;
+    -moz-animation: spin 4s linear infinite;
+    animation: spin 4s linear infinite;
+    color: #000 !important;
+    font-size: 50px;
+}
+
+@-moz-keyframes spin {
+    100% {
+        -moz-transform: rotate(360deg);
+    }
+}
+
+@-webkit-keyframes spin {
+    100% {
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+@keyframes spin {
+    100% {
+        -webkit-transform: rotate(360deg);
+        transform: rotate(360deg);
+    }
+}
